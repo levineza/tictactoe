@@ -4,5 +4,6 @@
 #include "board.h"
 
 Token tictactoe(Board b);
+Token tictactoeGraphical(Board b);
 
 #endif
