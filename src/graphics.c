@@ -268,3 +268,16 @@ void displayCatsGame(void)
 	SDL_UpdateWindowSurface(gWindow);
 	return;
 }
+
+void displayDullToken(Token tokenType, int row, int col)
+{
+		SDL_Surface *token;
+		if (tokenType == X) token = gXToken;
+		else if (tokenType == O) token = gOToken;
+
+	SDL_SetSurfaceColorMod(token, 127, 127, 127);
+	blitToken(tokenType, row, col);
+	SDL_UpdateWindowSurface(gWindow);
+	SDL_SetSurfaceColorMod(token, 255, 255, 255);
+	return;
+}

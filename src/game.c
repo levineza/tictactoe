@@ -58,6 +58,18 @@ Token tictactoeGraphical(Board b)
 				// User requests quit
 				if (e.type == SDL_QUIT) {
 					quit = true;
+				} else if (e.type == SDL_MOUSEBUTTONDOWN &&
+					e.button.button == SDL_BUTTON_LEFT) {
+					int x, y;
+					x = e.button.x;
+					y = e.button.y;
+					if (x > GRID_OFFSET_X + GRID_WIDTH &&
+						 y > GRID_OFFSET_Y + GRID_HEIGHT) {
+						 board_empty(b);
+						 currentState = INPROGRESS;
+						 displayBoard(b);
+						 currentToken = X;
+					}
 				} else {
 					if (currentState != INPROGRESS) continue;
 					if (currentPlayer == HUMAN) {
@@ -75,6 +87,8 @@ Token tictactoeGraphical(Board b)
 						displayGameState(currentState);
 					}
 				}
+				SDL_Delay(32);
+				SDL_FlushEvent(SDL_MOUSEMOTION);
 			}
 		}
 	}
@@ -193,19 +207,19 @@ static int *read_input(void)
 static void playerMoveGraphical(Board b, Token token)
 {
 	bool tokenPlaced = false;
+	int x, y;
+	int row, col, row_old, col_old;
 	SDL_Event e;
 	while(!tokenPlaced) {
 		SDL_WaitEvent(&e);
 		if (e.type == SDL_QUIT) exit(EXIT_SUCCESS);
 		else if (e.type == SDL_MOUSEBUTTONDOWN &&
 					e.button.button == SDL_BUTTON_LEFT) {
-			int x, y;
 			x = e.button.x;
 			y = e.button.y;
-			if (x < GRID_OFFSET_X || x > GRID_OFFSET_X + GRID_WIDTH) continue;
-			if (y < GRID_OFFSET_Y || y > GRID_OFFSET_Y + GRID_HEIGHT) continue;
+			if (x <= GRID_OFFSET_X || x >= GRID_OFFSET_X + GRID_WIDTH) continue;
+			if (y <= GRID_OFFSET_Y || y >= GRID_OFFSET_Y + GRID_HEIGHT) continue;
 
-			int row, col;
 			row = (y - GRID_OFFSET_Y)/TOKEN_HEIGHT;
 			col = (x - GRID_OFFSET_X)/TOKEN_WIDTH;
 			//if (row < 0 || row > NUM_ROWS) continue;
@@ -213,6 +227,23 @@ static void playerMoveGraphical(Board b, Token token)
 			if (board_checkCell(b, row, col) != EMPTY) continue;
 			board_placeToken(b, token, row, col);
 			tokenPlaced = true;
+		} else {
+			SDL_GetMouseState( &x, &y );
+			//printf("x = %d, y = %d\n", x, y); // Testing
+			if (x <= GRID_OFFSET_X || x >= GRID_OFFSET_X + GRID_WIDTH) continue;
+			if (y <= GRID_OFFSET_Y || y >= GRID_OFFSET_Y + GRID_HEIGHT) continue;
+
+			row = (y - GRID_OFFSET_Y)/TOKEN_HEIGHT;
+			col = (x - GRID_OFFSET_X)/TOKEN_WIDTH;
+			if (row == row_old && col == col_old) continue;
+			if (board_checkCell(b, row, col) == EMPTY) {
+				displayBoard(b);
+				displayDullToken(token, row, col);
+			}
+			row_old = row;
+			col_old = col;
+			SDL_Delay(32);
+			SDL_FlushEvent(SDL_MOUSEMOTION);
 		}
 	}
 }

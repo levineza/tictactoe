@@ -47,5 +47,6 @@ void displayBoard(Board b);
 void displayXWins(void);
 void displayOWins(void);
 void displayCatsGame(void);
+void displayDullToken(Token token, int row, int col);
 
 #endif // GRAPHICS_H
