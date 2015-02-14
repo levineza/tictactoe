@@ -1,3 +1,8 @@
+// Tic Tac Toe - A dark themed Tic Tac Toe game.
+// Copyright (C) 2015 Zachariah Levine
+// You should have received a copy of the GNU General Public License
+// along with this program.  If not, see <http://www.gnu.org/licenses/>.
+
 #include "graphics.h"
 #include "board.h"
 
@@ -15,9 +20,19 @@ SDL_Surface *gTitle = NULL;
 SDL_Surface *gXWins = NULL;
 SDL_Surface *gOWins = NULL;
 SDL_Surface *gCatsGame = NULL;
+SDL_Surface *gMainMenu = NULL;
+SDL_Surface *gMenuLink = NULL;
+SDL_Surface *gRefresh = NULL;
+SDL_Surface *gCreditsMenu = NULL;
 
 // Loads individual image
 SDL_Surface *loadSurface(char *path);
+
+// Blits the token to a cell in the BOARD
+void blitToken(Token tokenType, int row, int col);
+
+// Blit all tokens currently on the board to the window surface
+void blitTokens(Board b);
 
 bool init() {
 	// Initialization flag.
@@ -28,7 +43,7 @@ bool init() {
 		printf("SDL could not initialize! SDL_Error: %s\n", SDL_GetError());
 	} else {
 		// Create window
-		gWindow = SDL_CreateWindow("Connect 4", 
+		gWindow = SDL_CreateWindow("Tic Tac Toe", 
        	                        SDL_WINDOWPOS_UNDEFINED,
          	                     SDL_WINDOWPOS_UNDEFINED,
             	                  SCREEN_WIDTH,
@@ -55,6 +70,36 @@ bool loadMedia() {
 		printf("Failed to load background!\n");
 		success = false;
 	}
+
+	// Load the main menu
+	gMainMenu = loadSurface("../misc/mainmenuneon.bmp");
+	if (gMainMenu == NULL) {
+		printf("Failed to load main menu!\n");
+		success = false;
+	}
+
+	// Load the credit menu
+	gCreditsMenu = loadSurface("../misc/credit_menu.bmp");
+	if (gCreditsMenu == NULL) {
+		printf("Failed to load credit menu!\n");
+		success = false;
+	}
+
+	// Load the menu link for the game board
+	gMenuLink = loadSurface("../misc/menuneon2.bmp");
+	if (gMenuLink == NULL) {
+		printf("Failed to load menu link used on the game board!\n");
+		success = false;
+	}
+	SDL_SetColorKey(gMenuLink, SDL_TRUE, SDL_MapRGB(gMenuLink->format, 0, 0, 0));
+
+	// Load the refresh symbol
+	gRefresh = loadSurface("../misc/refreshneon.bmp");
+	if (gRefresh == NULL) {
+		printf("Failed to load refresh symbol used on the game board!\n");
+		success = false;
+	}
+	SDL_SetColorKey(gRefresh, SDL_TRUE, SDL_MapRGB(gRefresh->format, 0, 0, 0));
 
 	// Load the title
 	gTitle = loadSurface("../misc/titleneon2.bmp");
@@ -135,6 +180,10 @@ void close_sdl() {
   SDL_FreeSurface(gXWins);
   SDL_FreeSurface(gOWins);
   SDL_FreeSurface(gCatsGame);
+  SDL_FreeSurface(gMainMenu);
+  SDL_FreeSurface(gMenuLink);
+  SDL_FreeSurface(gRefresh);
+  SDL_FreeSurface(gCreditsMenu);
 
 	gBoard = NULL;
 	gXToken = NULL;
@@ -144,6 +193,10 @@ void close_sdl() {
 	gXWins = NULL;
 	gOWins = NULL;
 	gCatsGame = NULL;
+	gMainMenu = NULL;
+	gMenuLink = NULL;
+	gRefresh = NULL;
+	gCreditsMenu = NULL;
 
 	// Destroy window
 	SDL_DestroyWindow(gWindow);
@@ -177,7 +230,7 @@ SDL_Surface *loadSurface(char *path)
 	return optimizedSurface;
 }
 
-// Blits the token to a cell in the grid
+// Blits the token to a cell in the BOARD
 void blitToken(Token tokenType, int row, int col)
 {
 		SDL_Surface *token;
@@ -186,8 +239,8 @@ void blitToken(Token tokenType, int row, int col)
 
 		// Determine the position for the token
 		SDL_Rect tokenRect;
-		tokenRect.x = GRID_OFFSET_X + TOKEN_WIDTH * col;
-		tokenRect.y = GRID_OFFSET_Y + TOKEN_HEIGHT * row;
+		tokenRect.x = BOARD_OFFSET_X + TOKEN_WIDTH * col;
+		tokenRect.y = BOARD_OFFSET_Y + TOKEN_HEIGHT * row;
 		tokenRect.w = TOKEN_WIDTH;
 		tokenRect.h = TOKEN_HEIGHT;
 
@@ -221,6 +274,8 @@ void displayBoard(Board b)
 	//SDL_BlitSurface(gBoard, NULL, gScreenSurface, NULL);
 	blitTokens(b);
 	SDL_BlitSurface(gBoard, NULL, gScreenSurface, NULL);
+	displayMenuLink();
+	displayRefresh();
 	SDL_UpdateWindowSurface(gWindow);
 }
 
@@ -229,7 +284,7 @@ void displayXWins(void)
 	// Determine the position for the X Wins! message 
 	SDL_Rect tokenRect;
 	tokenRect.x = 0;
-	tokenRect.y = GRID_OFFSET_Y + GRID_HEIGHT;
+	tokenRect.y = BOARD_OFFSET_Y + BOARD_HEIGHT;
 	tokenRect.w = SCREEN_WIDTH;
 	tokenRect.h = TOKEN_HEIGHT;
 
@@ -244,7 +299,7 @@ void displayOWins(void)
 	// Determine the position for the O Wins! message
 	SDL_Rect tokenRect;
 	tokenRect.x = 0;
-	tokenRect.y = GRID_OFFSET_Y + GRID_HEIGHT;
+	tokenRect.y = BOARD_OFFSET_Y + BOARD_HEIGHT;
 	tokenRect.w = SCREEN_WIDTH;
 	tokenRect.h = TOKEN_HEIGHT;
 
@@ -259,7 +314,7 @@ void displayCatsGame(void)
 	// Determine the position for the Cat's Game message
 	SDL_Rect tokenRect;
 	tokenRect.x = 0;
-	tokenRect.y = GRID_OFFSET_Y + GRID_HEIGHT;
+	tokenRect.y = BOARD_OFFSET_Y + BOARD_HEIGHT;
 	tokenRect.w = SCREEN_WIDTH;
 	tokenRect.h = TOKEN_HEIGHT;
 
@@ -280,4 +335,54 @@ void displayDullToken(Token tokenType, int row, int col)
 	SDL_UpdateWindowSurface(gWindow);
 	SDL_SetSurfaceColorMod(token, 255, 255, 255);
 	return;
+}
+
+void displayMenu(void)
+{
+	SDL_BlitSurface(gMainMenu, NULL, gScreenSurface, NULL);
+	SDL_UpdateWindowSurface(gWindow);
+	return;
+}
+
+void displayCreditsMenu(void)
+{
+	SDL_BlitSurface(gCreditsMenu, NULL, gScreenSurface, NULL);
+	SDL_UpdateWindowSurface(gWindow);
+	return;
+}
+
+void displayMenuLink(void)
+{
+	// Determine the position for the Cat's Game message
+	SDL_Rect tokenRect;
+	//tokenRect.x = 0;
+	//tokenRect.y = BOARD_OFFSET_Y + BOARD_HEIGHT;
+	//tokenRect.w = SCREEN_WIDTH;
+	//tokenRect.h = TOKEN_HEIGHT;
+	tokenRect.x = 426;
+	tokenRect.y = BOARD_OFFSET_Y + BOARD_HEIGHT + 70;
+	tokenRect.w = 80;
+	tokenRect.h = 39;
+
+	// Blit the message to the desired position
+	SDL_BlitSurface(gMenuLink, NULL, gScreenSurface, &tokenRect);  
+	//SDL_UpdateWindowSurface(gWindow);
+	return;
+}
+
+void displayRefresh(void)
+{
+	// Determine the position for the Cat's Game message
+	SDL_Rect tokenRect;
+	tokenRect.x = 0;
+	tokenRect.y = BOARD_OFFSET_Y + BOARD_HEIGHT + 60;
+	tokenRect.w = 40;
+	tokenRect.h = 40;
+
+	// Blit the message to the desired position
+	//SDL_BlitSurface(gRefresh, NULL, gScreenSurface, &tokenRect);  
+	SDL_BlitScaled(gRefresh, NULL, gScreenSurface, &tokenRect);  
+	//SDL_UpdateWindowSurface(gWindow);
+	return;
+	
 }

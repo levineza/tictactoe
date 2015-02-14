@@ -1,3 +1,8 @@
+// Tic Tac Toe - A dark themed Tic Tac Toe game.
+// Copyright (C) 2015 Zachariah Levine
+// You should have received a copy of the GNU General Public License
+// along with this program.  If not, see <http://www.gnu.org/licenses/>.
+
 #ifndef BOARD_H // NOTE(Zach): This is an include guard
 #define BOARD_H
 

@@ -1,4 +1,10 @@
+// Tic Tac Toe - A dark themed Tic Tac Toe game.
+// Copyright (C) 2015 Zachariah Levine
+// You should have received a copy of the GNU General Public License
+// along with this program.  If not, see <http://www.gnu.org/licenses/>.
+
 #include "game.h"
+#include "board.h"
 #include "AI.h"
 #include "graphics.h"
 #include <stdio.h>
@@ -8,6 +14,7 @@
 
 typedef enum {HUMAN, COMPUTER} Player; 
 typedef enum {INPROGRESS, CATSGAME, XWON, OWON} GameState;
+typedef enum {MAINMENU, ONEPLAYER, TWOPLAYER, CREDITS, QUIT, DONOTHING} MainMenuState;
 
 static void switchPlayer(Player *player);
 static void switchToken(Token *token);
@@ -17,22 +24,15 @@ char tokenToChar(Token token);
 static void printBoard(Board b);
 static void dump_line(void);
 static int *read_input(void);
-static void playerMoveGraphical(Board b, Token token);
+static MainMenuState playerMoveGraphical(Board b, Token token, int numPlayers);
 static void displayGameState(GameState state);
+Token tictactoeText(Board b);
+MainMenuState tictactoeGraphical(Board b, int numPlayers);
+MainMenuState handleMenuMouseClick(int x, int y);
+MainMenuState creditsMenu(void);
 
-Token tictactoeGraphical(Board b)
+int tictactoe(void)
 {
-	Player currentPlayer;
-	Token currentToken = X;
-	GameState currentState = INPROGRESS;
-	srand((unsigned) time(NULL));
-
-	if (rand() % 2 == 0) {
-		currentPlayer = HUMAN;
-	} else {
-		currentPlayer = COMPUTER;
-	}
-
 	// Start SDL and create a window
 	if (!init()) {
 		printf("Failed to initialize!\n");
@@ -41,70 +41,157 @@ Token tictactoeGraphical(Board b)
 		if (!loadMedia()) {
 			printf("Failed to load media!\n");
 		} else {
-			displayBoard(b);
-			currentState = checkWin(b);
-			displayGameState(currentState);
-
-			// Main loop flag
-			bool quit = false;
+			displayMenu();
+			// State of the menu
+			MainMenuState currentState = MAINMENU;
 
 			// Event handler
 			SDL_Event e;
 
-			while(!quit) {
+			int x, y;
+
+			Board b = board_create();
+
+			while(currentState != QUIT) {
 				// Wait for an event to occur
 				SDL_WaitEvent(&e);
 
 				// User requests quit
 				if (e.type == SDL_QUIT) {
-					quit = true;
+					currentState = QUIT;
 				} else if (e.type == SDL_MOUSEBUTTONDOWN &&
 					e.button.button == SDL_BUTTON_LEFT) {
-					int x, y;
+
 					x = e.button.x;
 					y = e.button.y;
-					if (x > GRID_OFFSET_X + GRID_WIDTH &&
-						 y > GRID_OFFSET_Y + GRID_HEIGHT) {
-						 board_empty(b);
-						 currentState = INPROGRESS;
-						 displayBoard(b);
-						 currentToken = X;
+
+					currentState = handleMenuMouseClick(x, y);
+					if (currentState == ONEPLAYER) {
+						while (currentState == ONEPLAYER) {
+							board_empty(b);
+							currentState = tictactoeGraphical(b, 1);
+						}
+					} else if (currentState == TWOPLAYER) {
+						while (currentState == TWOPLAYER) {
+							board_empty(b);
+							currentState = tictactoeGraphical(b, 2);
+						}
+					} else if (currentState == CREDITS) {
+						currentState = creditsMenu();
 					}
+					displayMenu();
 				} else {
-					if (currentState != INPROGRESS) continue;
-					if (currentPlayer == HUMAN) {
-						playerMoveGraphical(b, currentToken);
-						switchPlayer(&currentPlayer);
-						switchToken(&currentToken);
-					} else {
-						playerMoveGraphical(b, currentToken);
-						//AI_makeMove(b, currentToken);
-						switchPlayer(&currentPlayer);
-						switchToken(&currentToken);
-					}
-					displayBoard(b);
-					if ((currentState = checkWin(b)) != INPROGRESS) {
-						displayGameState(currentState);
-					}
+					//handleMenuMouseMotion();
 				}
-				SDL_Delay(32);
-				SDL_FlushEvent(SDL_MOUSEMOTION);
 			}
+			board_destroy(b);
 		}
 	}
-	// Free resources and close SDL
 	close_sdl();
+	return 0;
+}
 
-	if (currentState == XWON) {
-		return X;
-	} else if (currentState == OWON) {
-		return O;
-	} else {
-		return EMPTY;
+MainMenuState creditsMenu(void)
+{
+	displayCreditsMenu();
+	// Event handler
+	SDL_Event e;
+
+	int x, y;
+
+	for (;;) {
+		// Wait for an event to occur
+		SDL_WaitEvent(&e);
+
+		// User requests quit
+		if (e.type == SDL_QUIT) {
+			return QUIT;
+		} else if (e.type == SDL_MOUSEBUTTONDOWN &&
+			e.button.button == SDL_BUTTON_LEFT) {
+
+			x = e.button.x;
+			y = e.button.y;
+			if (x >= 48 && y>= 413 && x <= 454 && y <= 465) return MAINMENU;
+		}
 	}
 }
 
-Token tictactoe(Board b)
+MainMenuState tictactoeGraphical(Board b, int numPlayers)
+{
+	Player currentPlayer;
+	Token currentToken = X;
+	GameState currentState = INPROGRESS;
+	MainMenuState menuState = numPlayers == 1 ? ONEPLAYER : TWOPLAYER;
+	srand((unsigned) time(NULL));
+
+	if (rand() % 2 == 0) {
+		currentPlayer = HUMAN;
+	} else {
+		currentPlayer = COMPUTER;
+	}
+
+	displayBoard(b);
+	currentState = checkWin(b);
+	displayGameState(currentState);
+
+	// Main loop flag
+	bool quit = false;
+
+	// Event handler
+	SDL_Event e;
+
+	while(!quit) {
+		// Wait for an event to occur
+		SDL_WaitEvent(&e);
+
+		// User requests quit
+		if (e.type == SDL_QUIT) {
+			quit = true;
+		} else if (e.type == SDL_MOUSEBUTTONDOWN &&
+			e.button.button == SDL_BUTTON_LEFT) {
+			int x, y;
+			x = e.button.x;
+			y = e.button.y;
+			// If the menu button was clicked
+			if (x >= 426 && y >= BOARD_OFFSET_Y + BOARD_HEIGHT + 70) {
+				return MAINMENU;
+			// If the refresh button was clicked
+			} else if (x <= 40 && y >= BOARD_OFFSET_Y + BOARD_HEIGHT + 60) {
+				if (numPlayers == 1) return ONEPLAYER;
+				if (numPlayers == 2) return TWOPLAYER;
+			}
+		} else {
+			if (currentState != INPROGRESS) continue;
+			if (currentPlayer == HUMAN) {
+				menuState = playerMoveGraphical(b, currentToken, numPlayers);
+				if (menuState == QUIT) return QUIT;
+				else if (menuState == MAINMENU) return MAINMENU;
+				else if (menuState == ONEPLAYER) return ONEPLAYER;
+				else if (menuState == TWOPLAYER) return TWOPLAYER;
+				switchPlayer(&currentPlayer);
+				switchToken(&currentToken);
+			} else {
+				menuState = playerMoveGraphical(b, currentToken, numPlayers);
+				//AI_makeMove(b, currentToken);
+				if (menuState == QUIT) return QUIT;
+				else if (menuState == MAINMENU) return MAINMENU;
+				else if (menuState == ONEPLAYER) return ONEPLAYER;
+				else if (menuState == TWOPLAYER) return TWOPLAYER;
+				switchPlayer(&currentPlayer);
+				switchToken(&currentToken);
+			}
+			displayBoard(b);
+			if ((currentState = checkWin(b)) != INPROGRESS) {
+				displayGameState(currentState);
+			}
+		}
+		SDL_Delay(32);
+		SDL_FlushEvent(SDL_MOUSEMOTION);
+	}
+	return QUIT;
+}
+
+Token tictactoeText(Board b)
 {
 	Player currentPlayer;
 	Token currentToken = X;
@@ -156,6 +243,14 @@ static void displayGameState(GameState state)
 	return;
 }
 
+MainMenuState handleMenuMouseClick(int x, int y)
+{
+	if (x >= 96 && y>= 221 && x <= 406 && y <= 287) return TWOPLAYER;
+	if (x >= 338 && y>= 441 && x <= 493 && y <= 493) return CREDITS;
+	if (x >= 190 && y>= 297 && x <= 313 && y <= 353) return QUIT;
+	return MAINMENU;
+}
+
 static void switchPlayer(Player *player)
 {
 	if (*player == HUMAN) {
@@ -204,7 +299,7 @@ static int *read_input(void)
 	return a;
 }
 
-static void playerMoveGraphical(Board b, Token token)
+static MainMenuState playerMoveGraphical(Board b, Token token, int numPlayers)
 {
 	bool tokenPlaced = false;
 	int x, y;
@@ -212,16 +307,24 @@ static void playerMoveGraphical(Board b, Token token)
 	SDL_Event e;
 	while(!tokenPlaced) {
 		SDL_WaitEvent(&e);
-		if (e.type == SDL_QUIT) exit(EXIT_SUCCESS);
+		if (e.type == SDL_QUIT) return QUIT;
 		else if (e.type == SDL_MOUSEBUTTONDOWN &&
 					e.button.button == SDL_BUTTON_LEFT) {
 			x = e.button.x;
 			y = e.button.y;
-			if (x <= GRID_OFFSET_X || x >= GRID_OFFSET_X + GRID_WIDTH) continue;
-			if (y <= GRID_OFFSET_Y || y >= GRID_OFFSET_Y + GRID_HEIGHT) continue;
+			// If menu was clicked
+			if (x >= 426 && y >= BOARD_OFFSET_Y + BOARD_HEIGHT + 70) return MAINMENU;
+			// If refresh was clicked
+			if (x <= 40 && y >= BOARD_OFFSET_Y + BOARD_HEIGHT + 60) {
+				if (numPlayers == 1) return ONEPLAYER;
+				if (numPlayers == 2) return TWOPLAYER;
+			}
+			// If the click was outside the board
+			if (x <= BOARD_OFFSET_X || x >= BOARD_OFFSET_X + BOARD_WIDTH) continue;
+			if (y <= BOARD_OFFSET_Y || y >= BOARD_OFFSET_Y + BOARD_HEIGHT) continue;
 
-			row = (y - GRID_OFFSET_Y)/TOKEN_HEIGHT;
-			col = (x - GRID_OFFSET_X)/TOKEN_WIDTH;
+			row = (y - BOARD_OFFSET_Y)/TOKEN_HEIGHT;
+			col = (x - BOARD_OFFSET_X)/TOKEN_WIDTH;
 			//if (row < 0 || row > NUM_ROWS) continue;
 			//if (col < 0 || col > NUM_COLS) continue;
 			if (board_checkCell(b, row, col) != EMPTY) continue;
@@ -230,11 +333,12 @@ static void playerMoveGraphical(Board b, Token token)
 		} else {
 			SDL_GetMouseState( &x, &y );
 			//printf("x = %d, y = %d\n", x, y); // Testing
-			if (x <= GRID_OFFSET_X || x >= GRID_OFFSET_X + GRID_WIDTH) continue;
-			if (y <= GRID_OFFSET_Y || y >= GRID_OFFSET_Y + GRID_HEIGHT) continue;
+			// If the click was outside the board
+			if (x <= BOARD_OFFSET_X || x >= BOARD_OFFSET_X + BOARD_WIDTH) continue;
+			if (y <= BOARD_OFFSET_Y || y >= BOARD_OFFSET_Y + BOARD_HEIGHT) continue;
 
-			row = (y - GRID_OFFSET_Y)/TOKEN_HEIGHT;
-			col = (x - GRID_OFFSET_X)/TOKEN_WIDTH;
+			row = (y - BOARD_OFFSET_Y)/TOKEN_HEIGHT;
+			col = (x - BOARD_OFFSET_X)/TOKEN_WIDTH;
 			if (row == row_old && col == col_old) continue;
 			if (board_checkCell(b, row, col) == EMPTY) {
 				displayBoard(b);
@@ -246,6 +350,7 @@ static void playerMoveGraphical(Board b, Token token)
 			SDL_FlushEvent(SDL_MOUSEMOTION);
 		}
 	}
+	return DONOTHING;
 }
 
 static void playerMove(Board b, Token token)
