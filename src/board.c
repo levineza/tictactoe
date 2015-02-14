@@ -6,6 +6,7 @@
 #include "board.h"
 #include <stdio.h>
 #include <stdlib.h>
+#include <assert.h>
 
 // NOTE(Zach): Definition of board_type, the implementation of the ADT Board
 struct board_type {
@@ -13,19 +14,10 @@ struct board_type {
 	Token board[NUM_ROWS][NUM_COLS];
 };
 
-// NOTE(Zach): A function that terminates the entire program with an error message
-static void terminate(const char *message)
-{
-	printf("%s\n", message);
-	exit(EXIT_FAILURE);
-}
-
-// NOTE(Zach): Create an instance of Abstract Data Type Board 
+// NOTE(Zach): Create an instance of Abstract Data Type Board, which is empty
 Board board_create(void)
 {
 	Board b = (Board) malloc(sizeof(struct board_type));
-	if (b == NULL)
-		terminate("Error in board_create: board could not be created.");
 	board_empty(b);
 	return b;
 }
@@ -34,11 +26,15 @@ Board board_create(void)
 void board_destroy(Board b)
 {
 	free(b);
+	return;
 }
 
 // NOTE(Zach): Return the value of the Board, b, at (row, col)
 Token board_checkCell(Board b, int row, int col)
 {
+	// asserts turned off after testing with compiler flag -DNDEBUG
+	assert(b != NULL);
+	if (b == NULL) return EMPTY;
 	return b->board[row][col];
 }
 
@@ -46,6 +42,11 @@ Token board_checkCell(Board b, int row, int col)
 // Return 0 for success and -1 for failure
 int board_placeToken(Board b, Token token, int row, int col)
 {
+	if (b == NULL) return -1;
+	// asserts turned off after testing with compiler flag -DNDEBUG
+	assert(0 <= row && row < NUM_ROWS);
+	assert(0 <= col && col < NUM_COLS);
+
 	if (b->board[row][col] == EMPTY) {
 		b->board[row][col] = token;
 		return 0;
@@ -56,6 +57,7 @@ int board_placeToken(Board b, Token token, int row, int col)
 // NOTE(Zach): Empty the Board, b
 void board_empty(Board b)
 {
+	if (b == NULL) return;
 	int row, col;
 
 	for (row = 0; row < NUM_ROWS; row++)

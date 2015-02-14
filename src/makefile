@@ -1,7 +1,7 @@
 SDL_CFLAGS=`sdl2-config --cflags`
 SDL_LDFLAGS=`sdl2-config --libs`
 CC=gcc
-CFLAGS=$(SDL_CFLAGS) -c -Wall
+CFLAGS=$(SDL_CFLAGS) -c -Wall #-DNDEBUG
 LDFLAGS=$(SDL_LDFLAGS)
 
 tictactoe: tictactoe.o board.o game.o AI.o graphics.o

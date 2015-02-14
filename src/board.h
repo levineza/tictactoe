@@ -15,7 +15,7 @@ typedef enum {EMPTY, X, O} Token;
 // NOTE(Zach): Board is a pointer to the incomplete type board_type
 typedef struct board_type *Board;
 
-// NOTE(Zach): Create an instance of Abstract Data Type board 
+// NOTE(Zach): Create an instance of Abstract Data Type board, which is empty
 Board board_create(void);
 
 // NOTE(Zach): Destroy (free the memory of) Board, b

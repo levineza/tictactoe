@@ -50,7 +50,8 @@ int tictactoe(void)
 
 			int x, y;
 
-			Board b = board_create();
+			Board b;
+			if ((b = board_create()) == NULL) currentState = QUIT;
 
 			while(currentState != QUIT) {
 				// Wait for an event to occur
