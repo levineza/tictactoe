@@ -24,6 +24,6 @@ spotless: clean
 
 board.o: board.h
 graphics.o: graphics.h board.h
-AI.o: AI.h board.h
+AI.o: AI.h board.h game.h
 game.o: game.h board.h AI.h graphics.h
 tictactoe.o: game.h

@@ -6,7 +6,11 @@
 #ifndef GAME_H
 #define GAME_H
 
+#include "board.h"
+
+typedef enum {INPROGRESS, CATSGAME, XWON, OWON} GameState;
 
 int tictactoe(void);
+GameState checkWin(Board b);
 
 #endif

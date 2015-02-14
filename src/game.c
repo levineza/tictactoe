@@ -4,7 +4,6 @@
 // along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 #include "game.h"
-#include "board.h"
 #include "AI.h"
 #include "graphics.h"
 #include <stdio.h>
@@ -13,13 +12,11 @@
 #include <stdbool.h>
 
 typedef enum {HUMAN, COMPUTER} Player; 
-typedef enum {INPROGRESS, CATSGAME, XWON, OWON} GameState;
 typedef enum {MAINMENU, ONEPLAYER, TWOPLAYER, CREDITS, QUIT, DONOTHING} MainMenuState;
 
 static void switchPlayer(Player *player);
 static void switchToken(Token *token);
 static void playerMove(Board b, Token token);
-static GameState checkWin(Board b);
 char tokenToChar(Token token);
 static void printBoard(Board b);
 static void dump_line(void);
@@ -34,6 +31,7 @@ MainMenuState mainMenu(void);
 
 int tictactoe(void)
 {
+	srand((unsigned) time(NULL));
 	// Start SDL and create a window
 	if (!init()) {
 		printf("Failed to initialize!\n");
@@ -135,8 +133,7 @@ MainMenuState tictactoeGraphical(Board b, int numPlayers)
 	Player currentPlayer;
 	Token currentToken = X;
 	GameState currentState = INPROGRESS;
-	MainMenuState menuState = numPlayers == 1 ? ONEPLAYER : TWOPLAYER;
-	srand((unsigned) time(NULL));
+	MainMenuState menuState = DONOTHING;
 
 	if (rand() % 2 == 0) {
 		currentPlayer = HUMAN;
@@ -181,8 +178,11 @@ MainMenuState tictactoeGraphical(Board b, int numPlayers)
 				switchPlayer(&currentPlayer);
 				switchToken(&currentToken);
 			} else {
-				menuState = playerMoveGraphical(b, currentToken, numPlayers);
-				//AI_makeMove(b, currentToken);
+				if (numPlayers == 2) {
+					menuState = playerMoveGraphical(b, currentToken, numPlayers);
+				} else if (numPlayers == 1) {
+					AI_makeMove(b, currentToken);
+				}
 				switchPlayer(&currentPlayer);
 				switchToken(&currentToken);
 			}
@@ -255,6 +255,7 @@ static void displayGameState(GameState state)
 
 MainMenuState handleMenuMouseClick(int x, int y)
 {
+	if (x >= 102 && y>= 145 && x <= 398 && y <= 211) return ONEPLAYER;
 	if (x >= 96 && y>= 221 && x <= 406 && y <= 287) return TWOPLAYER;
 	if (x >= 338 && y>= 441 && x <= 493 && y <= 493) return CREDITS;
 	if (x >= 190 && y>= 297 && x <= 313 && y <= 353) return QUIT;
@@ -379,7 +380,7 @@ static void playerMove(Board b, Token token)
 	free(a);
 }
 
-static GameState checkWin(Board b)
+GameState checkWin(Board b)
 {
 	int row, col, count;
 
