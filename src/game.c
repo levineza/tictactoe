@@ -30,6 +30,7 @@ Token tictactoeText(Board b);
 MainMenuState tictactoeGraphical(Board b, int numPlayers);
 MainMenuState handleMenuMouseClick(int x, int y);
 MainMenuState creditsMenu(void);
+MainMenuState mainMenu(void);
 
 int tictactoe(void)
 {
@@ -41,48 +42,30 @@ int tictactoe(void)
 		if (!loadMedia()) {
 			printf("Failed to load media!\n");
 		} else {
-			displayMenu();
 			// State of the menu
 			MainMenuState currentState = MAINMENU;
-
-			// Event handler
-			SDL_Event e;
-
-			int x, y;
 
 			Board b;
 			if ((b = board_create()) == NULL) currentState = QUIT;
 
 			while(currentState != QUIT) {
-				// Wait for an event to occur
-				SDL_WaitEvent(&e);
-
-				// User requests quit
-				if (e.type == SDL_QUIT) {
-					currentState = QUIT;
-				} else if (e.type == SDL_MOUSEBUTTONDOWN &&
-					e.button.button == SDL_BUTTON_LEFT) {
-
-					x = e.button.x;
-					y = e.button.y;
-
-					currentState = handleMenuMouseClick(x, y);
-					if (currentState == ONEPLAYER) {
-						while (currentState == ONEPLAYER) {
-							board_empty(b);
-							currentState = tictactoeGraphical(b, 1);
-						}
-					} else if (currentState == TWOPLAYER) {
-						while (currentState == TWOPLAYER) {
-							board_empty(b);
-							currentState = tictactoeGraphical(b, 2);
-						}
-					} else if (currentState == CREDITS) {
+				switch (currentState) {
+					case  MAINMENU:
+						currentState = mainMenu();
+						break;
+					case ONEPLAYER:
+						board_empty(b);
+						currentState = tictactoeGraphical(b, 1);
+						break;
+					case TWOPLAYER:
+						board_empty(b);
+						currentState = tictactoeGraphical(b, 2);
+						break;
+					case CREDITS:
 						currentState = creditsMenu();
-					}
-					displayMenu();
-				} else {
-					//handleMenuMouseMotion();
+						break;
+					default:
+						break;
 				}
 			}
 			board_destroy(b);
@@ -90,6 +73,36 @@ int tictactoe(void)
 	}
 	close_sdl();
 	return 0;
+}
+
+MainMenuState mainMenu(void)
+{
+	MainMenuState currentState = MAINMENU;
+	displayMenu();
+	// Event handler
+	SDL_Event e;
+
+	int x, y;
+
+	while (currentState == MAINMENU) {
+		// Wait for an event to occur
+		SDL_WaitEvent(&e);
+
+		// User requests quit
+		if (e.type == SDL_QUIT) {
+			return QUIT;
+		} else if (e.type == SDL_MOUSEBUTTONDOWN &&
+			e.button.button == SDL_BUTTON_LEFT) {
+
+			x = e.button.x;
+			y = e.button.y;
+
+			currentState = handleMenuMouseClick(x, y);
+		} else {
+			//handleMenuMouseMotion();
+		}
+	}
+	return currentState;
 }
 
 MainMenuState creditsMenu(void)
