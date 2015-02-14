@@ -178,22 +178,18 @@ MainMenuState tictactoeGraphical(Board b, int numPlayers)
 			if (currentState != INPROGRESS) continue;
 			if (currentPlayer == HUMAN) {
 				menuState = playerMoveGraphical(b, currentToken, numPlayers);
-				if (menuState == QUIT) return QUIT;
-				else if (menuState == MAINMENU) return MAINMENU;
-				else if (menuState == ONEPLAYER) return ONEPLAYER;
-				else if (menuState == TWOPLAYER) return TWOPLAYER;
 				switchPlayer(&currentPlayer);
 				switchToken(&currentToken);
 			} else {
 				menuState = playerMoveGraphical(b, currentToken, numPlayers);
 				//AI_makeMove(b, currentToken);
-				if (menuState == QUIT) return QUIT;
-				else if (menuState == MAINMENU) return MAINMENU;
-				else if (menuState == ONEPLAYER) return ONEPLAYER;
-				else if (menuState == TWOPLAYER) return TWOPLAYER;
 				switchPlayer(&currentPlayer);
 				switchToken(&currentToken);
 			}
+			if (menuState == QUIT) return QUIT;
+			else if (menuState == MAINMENU) return MAINMENU;
+			else if (menuState == ONEPLAYER) return ONEPLAYER;
+			else if (menuState == TWOPLAYER) return TWOPLAYER;
 			displayBoard(b);
 			if ((currentState = checkWin(b)) != INPROGRESS) {
 				displayGameState(currentState);

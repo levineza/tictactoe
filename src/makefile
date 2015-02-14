@@ -3,24 +3,27 @@ SDL_LDFLAGS=`sdl2-config --libs`
 CC=gcc
 CFLAGS=$(SDL_CFLAGS) -c -Wall #-DNDEBUG
 LDFLAGS=$(SDL_LDFLAGS)
+SOURCES=board.c graphics.c game.c AI.c tictactoe.c
+OBJECTS=$(SOURCES:.c=.o)
+EXECUTABLE=tictactoe
 
-tictactoe: tictactoe.o board.o game.o AI.o graphics.o
-	$(CC) -o tictactoe tictactoe.o board.o game.o AI.o graphics.o $(LDFLAGS)
+all: $(SOURCES) $(EXECUTABLE)
 
-tictactoe.o: tictactoe.c
-	$(CC) $(CFLAGS) tictactoe.c
+$(EXECUTABLE): $(OBJECTS)
+	$(CC) -o $@ $(OBJECTS) $(LDFLAGS)
 
-board.o: board.c board.h
-	$(CC) $(CFLAGS) board.c
+.c.o:
+	$(CC) $(CFLAGS) $< -o $@
 
-game.o: game.c game.h board.h AI.h
-	$(CC) $(CFLAGS) game.c
-
-AI.o: AI.c AI.h
-	$(CC) $(CFLAGS) AI.c
-
-graphics.o: graphics.c graphics.h game.c game.h board.c board.h
-	$(CC) $(CFLAGS) graphics.c 
-
+.PHONY: clean spotless
 clean:
-	rm *.o tictactoe
+	rm -f $(OBJECTS)
+
+spotless: clean
+	rm -f $(EXECUTABLE)
+
+board.o: board.h
+graphics.o: graphics.h board.h
+AI.o: AI.h board.h
+game.o: game.h board.h AI.h graphics.h
+tictactoe.o: game.h
