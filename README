@@ -3,10 +3,10 @@ Copyright (C) 2015 Zachariah Levine
 
 Game currently implements a GUI; the text-based game is still present as a callable function.
 
-Currently, the one player mode has not been implemented.
+Currently, the one player mode is just an AI that makes random moves.
 
 SDL2 is required to compile and run this program, and can be installed with
 your package manager or compiled from source from https://www.libsdl.org/.
 
-To compile, execute "make all" in src.
+To compile, execute "make" in src.
 This should produce the executable ./tictactoe
